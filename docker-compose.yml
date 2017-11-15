@@ -3,27 +3,18 @@ version: "2"
 services:
 
   db:
-    build: db
-    restart: unless-stopped
-    volumes:
-      - ./volumes/db/var/lib/postgresql/data:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
+    image: mysql:5.6.33
     environment:
-      - POSTGRES_USER=mmuser
-      - POSTGRES_PASSWORD=mmuser_password
-      - POSTGRES_DB=mattermost
-    # uncomment the following to enable backup
-    #  - AWS_ACCESS_KEY_ID=XXXX
-    #  - AWS_SECRET_ACCESS_KEY=XXXX
-    #  - WALE_S3_PREFIX=s3://BUCKET_NAME/PATH
-    #  - AWS_REGION=us-east-1
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
 
   app:
     build:
       context: app
       # comment out 2 following lines for team edition
-      # args:
-      #   - edition=team
+      args:
+        - edition=team
     restart: unless-stopped
     volumes:
       - ./volumes/app/mattermost/config:/mattermost/config:rw
@@ -31,10 +22,9 @@ services:
       - ./volumes/app/mattermost/logs:/mattermost/logs:rw
       - /etc/localtime:/etc/localtime:ro
     environment:
-      # set same as db credentials and dbname
-      - MM_USERNAME=mmuser
-      - MM_PASSWORD=mmuser_password
-      - MM_DBNAME=mattermost
+      MM_SQLSETTINGS_DRIVERNAME: mysql
+      MM_SQLSETTINGS_DATASOURCE: "mmuser:mmuser_password@tcp(db:3306)/mattermost_dev?charset=utf8mb4,utf8&readTimeout=30s&writeTimeout=30s"
+      DB_PORT_NUMBER: 3306
       # in case your config is not in default location
       #- MM_CONFIG=/mattermost/config/config.json
 
